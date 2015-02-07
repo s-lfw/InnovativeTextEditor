@@ -1,0 +1,6 @@
+out/
+*.class
+*.zip
+target/
+.idea/workspace.xml
+.idea/dictionaries/
