@@ -78,15 +78,15 @@ public class Dictionary {
         Index index = indexList.get(startIndexPosition);
         startIndex = index.start;
 
-        for (int charPosition = INDICES_DEPTH; charPosition<prefix.length(); ++charPosition) {
-            char checkingChar = prefix.charAt(charPosition);
-            while (words[startIndex].word.length()<=charPosition ||
-                    words[startIndex].word.charAt(charPosition)<checkingChar)
-                ++startIndex;
-            if (startIndex>=words.length ||
-                    !words[startIndex].word.startsWith(prefix.substring(0, charPosition))) {
-                return new String[0];
-            }
+        if (startIndex>=words.length) {
+            return new String[0];
+        }
+
+        while (prefix.compareTo(words[startIndex].word)>0) {
+            ++startIndex;
+        }
+        if (prefix.compareTo(words[startIndex].word)<0) {
+            return new String[0];
         }
 
         int endIndexPosition = 0;
@@ -103,18 +103,11 @@ public class Dictionary {
                 --endIndexPosition;
             }
             index = indexList.get(endIndexPosition);
-            endIndex = index.end;
+            endIndex = index.start;
         }
 
-        for (int charPosition = INDICES_DEPTH; charPosition<prefix.length(); ++charPosition) {
-            char checkingChar = prefix.charAt(charPosition);
-            while (words[endIndex-1].word.length()<=charPosition ||
-                    words[endIndex-1].word.charAt(charPosition)>checkingChar) {
-                --endIndex;
-            }
-            if (!words[endIndex-1].word.startsWith(prefix.substring(0, charPosition))) {
-                return new String[0];
-            }
+        while (!words[endIndex-1].word.startsWith(prefix)) {
+            --endIndex;
         }
 
 
