@@ -14,6 +14,11 @@ class Word {
         this.frequency = frequency;
     }
 
+    @Override
+    public String toString() {
+        return word;
+    }
+
     public static Comparator<Word> getWordComparator() {
         return new Comparator<Word>() {
             @Override
@@ -27,7 +32,7 @@ class Word {
         return new Comparator<Word>() {
             @Override
             public int compare(Word o1, Word o2) {
-                return o1.frequency-o2.frequency;
+                return o2.frequency-o1.frequency;
             }
         };
     }
