@@ -83,12 +83,7 @@ public class Application {
 
     private void actuallyDoWork() {
         for (String q : queries) {
-            try {
-                System.out.println(Arrays.toString(dictionary.getSelection(q)));
-            } catch (Exception e) {
-                System.err.println("Failed to found \'"+q+"\' string");
-                e.printStackTrace();
-            }
+            System.out.println(Arrays.toString(dictionary.getSelection(q)));
         }
     }
 

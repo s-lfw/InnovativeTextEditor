@@ -19,6 +19,16 @@ class Word {
         return word;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof Word && this.word.equals(((Word) o).word);
+    }
+
+    @Override
+    public int hashCode() {
+        return word != null ? word.hashCode() : 0;
+    }
+
     public static Comparator<Word> getWordComparator() {
         return new Comparator<Word>() {
             @Override

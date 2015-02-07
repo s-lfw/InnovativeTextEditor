@@ -2,6 +2,7 @@ package editor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -61,14 +62,20 @@ public class Dictionary {
         return newIndices;
     }
 
-    public String[] getSelection(String prefix) {
-        if (prefix==null) {
-            throw new NullPointerException("Prefix argument is null");
-        }
-        if (prefix.isEmpty()) {
-            return new String[0];
-        }
+    public Word[] getSelection(String prefix) {
+//        if (prefix.length()>=INDICES_DEPTH)
+//            return new String[0];
 
+//        if (prefix==null) {
+//            throw new NullPointerException("Prefix argument is null");
+//        }
+//        if (prefix.isEmpty()) {
+//            return new String[0];
+//        }
+
+//        long t;
+
+//        t = -System.currentTimeMillis();
         int startIndex, endIndex;
         int startIndexPosition = 0;
         for (int charIndex = 0; charIndex < Math.min(prefix.length(), INDICES_DEPTH); ++charIndex) {
@@ -77,18 +84,22 @@ public class Dictionary {
         }
         Index index = indexList.get(startIndexPosition);
         startIndex = index.start;
+//        System.out.println(t+System.currentTimeMillis());
 
+//        t = -System.currentTimeMillis();
         if (startIndex>=words.length) {
-            return new String[0];
+            return new Word[0];
         }
 
         while (prefix.compareTo(words[startIndex].word)>0) {
             ++startIndex;
         }
         if (prefix.compareTo(words[startIndex].word)<0) {
-            return new String[0];
+            return new Word[0];
         }
+//        System.out.println(t+System.currentTimeMillis());
 
+//        t = -System.currentTimeMillis();
         int endIndexPosition = 0;
         if (prefix.length()>=INDICES_DEPTH) {
             endIndex = index.end;
@@ -105,22 +116,45 @@ public class Dictionary {
             index = indexList.get(endIndexPosition);
             endIndex = index.start;
         }
+//        System.out.println(t+System.currentTimeMillis());
 
+//        t = -System.currentTimeMillis();
         while (!words[endIndex-1].word.startsWith(prefix)) {
             --endIndex;
         }
+//        System.out.println(t+System.currentTimeMillis());
 
 
+//        t = -System.currentTimeMillis();
         Word[] selection = new Word[endIndex-startIndex];
         System.arraycopy(words, startIndex, selection, 0, selection.length);
 
-        Arrays.sort(selection, Word.getFrequencyComparator());
+//        Arrays.sort(selection, Word.getFrequencyComparator());
+//        findMostFrequent();
+//        System.out.println(t + System.currentTimeMillis());
 
-        String[] result = new String[Math.min(selection.length, MAX_SELECTION_LENGTH)];
+        Word[] result = new Word[Math.min(selection.length, MAX_SELECTION_LENGTH)];
+        Word word = new Word("", 0);
         for (int i = 0; i<result.length; ++i) {
-            result[i] = selection[i].word;
+//            result[i] = selection[i].word;
+            word = getMostFrequent(selection, result);
+            result[i] = word;
         }
+//        System.out.println(t + System.currentTimeMillis());
 
+        return result;
+    }
+
+    private Word getMostFrequent(Word[] selection, Word... excludeWords) {
+        List<Word> ew = Arrays.asList(excludeWords);
+        Word result = new Word("", 0);
+        for (Word w : selection) {
+            if (w.frequency>result.frequency) {
+                if (!ew.contains(w)) {
+                    result = w;
+                }
+            }
+        }
         return result;
     }
 
