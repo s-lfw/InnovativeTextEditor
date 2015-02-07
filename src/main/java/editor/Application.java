@@ -44,9 +44,6 @@ public class Application {
         }
         dictionary = new Dictionary(dictionaryLength);
         for (int line = 0; line<dictionaryLength; ++line) {
-//            if (line*10%dictionaryLength==0) {
-//                System.out.println(line*100/dictionaryLength+"% completed");
-//            }
             currentLine = br.readLine();
             String[] wordAndFrequency = currentLine.split(" ");
             if (wordAndFrequency.length!=2) {
@@ -75,15 +72,22 @@ public class Application {
 
     private void doWork() {
         long timeMillis = -System.currentTimeMillis();
-//        testLaunch();
-        actuallyDoWork();
+        if (debugMode) {
+            testLaunch();
+        } else {
+            actuallyDoWork();
+        }
         timeMillis += System.currentTimeMillis();
         System.out.println("Working time: "+(timeMillis/1000.0)+"s");
     }
 
     private void actuallyDoWork() {
         for (String q : queries) {
-            System.out.println(Arrays.toString(dictionary.getSelection(q)));
+            String[] r = dictionary.getSelection(q);
+            for (String s : r) {
+                System.out.println(s);
+            }
+//            System.out.println(Arrays.toString(dictionary.getSelection(q)));
         }
     }
 

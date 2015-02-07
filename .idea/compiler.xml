@@ -26,5 +26,8 @@
         <module name="InnovativeTextEditor" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="InnovativeTextEditor" target="1.7" />
+    </bytecodeTargetLevel>
   </component>
 </project>
