@@ -10,6 +10,7 @@ public class Application {
 
     public void run() throws IOException {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
+            // initializing dictionary
             String currentLine = br.readLine();
             int dictionaryLength;
             try {
@@ -34,9 +35,18 @@ public class Application {
                 }
             }
 
+            // building dictionary indices
             dictionary.prepareForWork();
 
-            int queriesCount = Integer.parseInt(br.readLine());
+            // doing the work!
+            int queriesCount;
+            currentLine = br.readLine();
+            try {
+                queriesCount = Integer.parseInt(currentLine);
+            } catch (NumberFormatException e) {
+                throw new IOException("Cannot resolve queries count M, trying to parse \'"
+                        +currentLine+"\'");
+            }
             for (int query = 0; query<queriesCount; ++query) {
                 dictionary.getSelection(br.readLine());
             }
