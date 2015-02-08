@@ -1,6 +1,9 @@
 package editor;
 
+import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Vsevolod Kosulnikov
@@ -21,6 +24,42 @@ public class Dictionary {
 
     private final Word[] words;
     private Index baseIndex;
+
+    public static Dictionary initDictionary(File dictionaryFile) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new FileReader(dictionaryFile))) {
+            return initDictionary(reader);
+        }
+    }
+    public static Dictionary initDictionary(BufferedReader reader) throws IOException {
+        // initializing dictionary
+        String currentLine = reader.readLine();
+        int dictionaryLength;
+        try {
+            dictionaryLength = Integer.parseInt(currentLine);
+        } catch (NumberFormatException e) {
+            throw new IOException("Cannot resolve dictionary length N, trying to parse \'"
+                    +currentLine+"\'");
+        }
+        Dictionary dictionary = new Dictionary(dictionaryLength);
+        for (int line = 0; line < dictionaryLength; ++line) {
+            currentLine = reader.readLine();
+            String[] wordAndFrequency = currentLine.split(" ");
+            if (wordAndFrequency.length != 2) {
+                throw new IOException("Cannot resolve word at "+line+" position: " +
+                        "it contains more that 2 columns");
+            }
+            try {
+                dictionary.addWord(wordAndFrequency[0], Integer.parseInt(wordAndFrequency[1]));
+            } catch (NumberFormatException e) {
+                throw new IOException("Cannot resolve word at "+line+" position: " +
+                        "it has non-numeric frequency value ("+wordAndFrequency[1]+")");
+            }
+        }
+
+        // building dictionary indices
+        dictionary.prepareForWork();
+        return dictionary;
+    }
 
     public Dictionary(int initialLength) {
         if (initialLength<=0) {
@@ -57,12 +96,12 @@ public class Dictionary {
         baseIndex.prepare();
     }
 
-    public void getSelection(String prefix) {
+    public List<String> getSelection(String prefix) {
         if (prefix==null) {
             throw new NullPointerException("Prefix is null!");
         }
         if (prefix.isEmpty()) {
-            return;
+            return new ArrayList<>();
         }
         String indexedPrefix;
         if (prefix.length()>INDICES_DEPTH) {
@@ -76,20 +115,16 @@ public class Dictionary {
             nearestIndex = nearestIndex.getNestedIndex(indexedPrefix.charAt(charPosition));
         }
 
-        int foundWords = 0;
+        List<String> result = new ArrayList<>();
         for (Word indexedWord : nearestIndex.sortedList) {
             if (indexedWord.word.startsWith(prefix)) {
-                sendAnswer(indexedWord.word);
-                ++foundWords;
+                result.add(indexedWord.word);
             }
-            if (foundWords==MAX_SELECTION_LENGTH) {
+            if (result.size()==MAX_SELECTION_LENGTH) {
                 break;
             }
         }
-    }
-
-    private void sendAnswer(String s) {
-        System.out.println(s);
+        return result;
     }
 
     private Index buildIndex(int from, int to, char character, int charIndex, String prefix) {

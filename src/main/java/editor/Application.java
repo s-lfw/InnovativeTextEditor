@@ -1,6 +1,7 @@
 package editor;
 
 import java.io.*;
+import java.util.List;
 
 /**
  * @author Vsevolod Kosulnikov
@@ -10,37 +11,11 @@ public class Application {
 
     public void run() throws IOException {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
-            // initializing dictionary
-            String currentLine = br.readLine();
-            int dictionaryLength;
-            try {
-                dictionaryLength = Integer.parseInt(currentLine);
-            } catch (NumberFormatException e) {
-                throw new IOException("Cannot resolve dictionary length N, trying to parse \'"
-                        +currentLine+"\'");
-            }
-            Dictionary dictionary = new Dictionary(dictionaryLength);
-            for (int line = 0; line < dictionaryLength; ++line) {
-                currentLine = br.readLine();
-                String[] wordAndFrequency = currentLine.split(" ");
-                if (wordAndFrequency.length != 2) {
-                    throw new IOException("Cannot resolve word at "+line+" position: " +
-                            "it contains more that 2 columns");
-                }
-                try {
-                    dictionary.addWord(wordAndFrequency[0], Integer.parseInt(wordAndFrequency[1]));
-                } catch (NumberFormatException e) {
-                    throw new IOException("Cannot resolve word at "+line+" position: " +
-                            "it has non-numeric frequency value ("+wordAndFrequency[1]+")");
-                }
-            }
-
-            // building dictionary indices
-            dictionary.prepareForWork();
+            Dictionary dictionary = Dictionary.initDictionary(br);
 
             // doing the work!
             int queriesCount;
-            currentLine = br.readLine();
+            String currentLine = br.readLine();
             try {
                 queriesCount = Integer.parseInt(currentLine);
             } catch (NumberFormatException e) {
@@ -48,24 +23,55 @@ public class Application {
                         +currentLine+"\'");
             }
             for (int query = 0; query<queriesCount; ++query) {
-                dictionary.getSelection(br.readLine());
+                List<String> selection = dictionary.getSelection(br.readLine());
+                for (String s : selection) {
+                    System.out.println(s);
+                }
             }
         }
     }
 
     public static void main(String[] args) {
-//        long timeMillis = -System.currentTimeMillis();
+        LaunchMode launchMode = LaunchMode.DESKTOP;
+        String host = null;
+        String dictionaryFilePath = null;
+        int port = -1;
+        if (args.length>0) {
+            switch (args[0]) {
+                case "-server":
+                    launchMode = LaunchMode.SERVER;
+                    dictionaryFilePath = args[1];
+                    port = Integer.parseInt(args[2]);
+                    break;
+                case "-client":
+                    launchMode = LaunchMode.CLIENT;
+                    host = args[1];
+                    port = Integer.parseInt(args[2]);
+                    break;
+            }
+        }
         try {
-            Application app = new Application();
-            app.run();
+            switch (launchMode) {
+                case DESKTOP:
+                    Application app = new Application();
+                    app.run();
+                    break;
+                case SERVER:
+                    new ServerApplication(new File(dictionaryFilePath), port);
+                    break;
+                case CLIENT:
+                    new ClientApplication(host, port);
+            }
         } catch (Throwable e) {
             System.err.println("Oops! Exception occurred, program will be terminated.");
             e.printStackTrace();
             System.exit(1);
         }
 
-//        timeMillis += System.currentTimeMillis();
-//        System.out.println("Total executing time: "+(timeMillis/1000.0)+"s");
         System.exit(0);
+    }
+
+    private static enum LaunchMode {
+        DESKTOP, SERVER, CLIENT
     }
 }
