@@ -2,7 +2,6 @@ package editor;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -83,16 +82,16 @@ public class Application {
 
     private void actuallyDoWork() {
         for (String q : queries) {
-            String[] r = dictionary.getSelection(q);
-            for (String s : r) {
-                System.out.println(s);
-            }
+            dictionary.getSelection(q);
+//            for (String s : r) {
+//                System.out.println(s);
+//            }
 //            System.out.println(Arrays.toString(dictionary.getSelection(q)));
         }
     }
 
     private void testLaunch() {
-        System.out.println(Arrays.toString(dictionary.getSelection("ac")));
+        dictionary.getSelection("ac");
     }
 
     public static void main(String[] args) {
