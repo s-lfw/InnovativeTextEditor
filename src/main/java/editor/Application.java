@@ -1,107 +1,50 @@
 package editor;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Vsevolod Kosulnikov
  */
 public class Application {
-    private final boolean debugMode;
-//    private String dictionaryFileName = "test.in";
-    private File dictionaryFile;
-    private Dictionary dictionary;
-    private List<String> queries = new ArrayList<>();
-    public Application() {
-        this(false);
-    }
-
-    public Application(boolean debugMode) {
-        this.debugMode = debugMode;
-    }
+    private Application() {}
 
     public void run() throws IOException {
-//        dictionaryFile = new File(System.getProperty("user.dir"), dictionaryFileName);
-//        System.out.println("Reading dictionary data and test selection from \""+
-//                dictionaryFile.getAbsolutePath()+"\"");
-        initDictionary();
-        System.out.println("Dictionary initialization is finished. Now working.");
-        doWork();
-    }
-
-    private void initDictionary() throws IOException {
-        long timeMillis = -System.currentTimeMillis();
-//        BufferedReader br = new BufferedReader(new FileReader(dictionaryFile));
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        System.out.println("Input reader initialized");
-        String currentLine = br.readLine();
-        int dictionaryLength = 0;
-        try {
-            dictionaryLength = Integer.parseInt(currentLine);
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
-            throw new IOException("File "+dictionaryFile+" does not contain proper data"); //todo
-        }
-        dictionary = new Dictionary(dictionaryLength);
-        System.out.println("Dictionary initialized");
-        for (int line = 0; line<dictionaryLength; ++line) {
-            currentLine = br.readLine();
-            String[] wordAndFrequency = currentLine.split(" ");
-            if (wordAndFrequency.length!=2) {
-                // text editors usually start line numeration from 1
-                throw new IOException("Bad input file, line number: " + (line + 2));
-            }
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
+            String currentLine = br.readLine();
+            int dictionaryLength;
             try {
-                dictionary.addWord(wordAndFrequency[0], Integer.parseInt(wordAndFrequency[1]));
+                dictionaryLength = Integer.parseInt(currentLine);
             } catch (NumberFormatException e) {
-                e.printStackTrace(); //todo
-                throw new IOException(); //todo
+                throw new IOException("Cannot resolve dictionary length N, trying to parse \'"
+                        +currentLine+"\'");
+            }
+            Dictionary dictionary = new Dictionary(dictionaryLength);
+            for (int line = 0; line < dictionaryLength; ++line) {
+                currentLine = br.readLine();
+                String[] wordAndFrequency = currentLine.split(" ");
+                if (wordAndFrequency.length != 2) {
+                    throw new IOException("Cannot resolve word at "+line+" position: " +
+                            "it contains more that 2 columns");
+                }
+                try {
+                    dictionary.addWord(wordAndFrequency[0], Integer.parseInt(wordAndFrequency[1]));
+                } catch (NumberFormatException e) {
+                    throw new IOException("Cannot resolve word at "+line+" position: " +
+                            "it has non-numeric frequency value ("+wordAndFrequency[1]+")");
+                }
+            }
+
+            dictionary.prepareForWork();
+
+            int queriesCount = Integer.parseInt(br.readLine());
+            for (int query = 0; query<queriesCount; ++query) {
+                dictionary.getSelection(br.readLine());
             }
         }
-
-        dictionary.prepareForWork();
-
-        timeMillis += System.currentTimeMillis();
-        System.out.println("Dictionary parsed in "+(timeMillis/1000.0)+"s");
-
-        currentLine = br.readLine(); //todo
-        Integer.parseInt(currentLine);
-        while ((currentLine=br.readLine())!=null) {
-            queries.add(currentLine);
-        }
-
-        br.close();
-        //todo br.close()
-    }
-
-    private void doWork() {
-        long timeMillis = -System.currentTimeMillis();
-        if (debugMode) {
-            testLaunch();
-        } else {
-            actuallyDoWork();
-        }
-        timeMillis += System.currentTimeMillis();
-        System.out.println("Working time: "+(timeMillis/1000.0)+"s");
-    }
-
-    private void actuallyDoWork() {
-        for (String q : queries) {
-            dictionary.getSelection(q);
-//            for (String s : r) {
-//                System.out.println(s);
-//            }
-//            System.out.println(Arrays.toString(dictionary.getSelection(q)));
-        }
-    }
-
-    private void testLaunch() {
-        dictionary.getSelection("ac");
     }
 
     public static void main(String[] args) {
-        long timeMillis = -System.currentTimeMillis();
+//        long timeMillis = -System.currentTimeMillis();
         try {
             Application app = new Application();
             app.run();
@@ -111,8 +54,8 @@ public class Application {
             System.exit(1);
         }
 
-        timeMillis += System.currentTimeMillis();
-        System.out.println("Total executing time: "+(timeMillis/1000.0)+"s");
+//        timeMillis += System.currentTimeMillis();
+//        System.out.println("Total executing time: "+(timeMillis/1000.0)+"s");
         System.exit(0);
     }
 }

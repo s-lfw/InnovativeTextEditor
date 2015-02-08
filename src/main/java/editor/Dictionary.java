@@ -23,6 +23,10 @@ public class Dictionary {
 
     private int addingIndex = 0;
     public void addWord(String word, int frequency) {
+        if (addingIndex>=words.length) {
+            System.err.println("Dictionary is packed already, cannot add more words");
+            return;
+        }
         if (word==null || word.isEmpty()) {
             System.err.println("Empty word skipped");
             return;
@@ -40,17 +44,15 @@ public class Dictionary {
         baseIndex = new Index(0, words.length, "", 0);
         baseIndex.split();
         baseIndex.prepare();
-//        Index newIndex = null;
-//        for (int charIndex = 0; charIndex<ALPHABET.length(); ++charIndex) {
-//            int startPosition = newIndex==null ? 0 : newIndex.end;
-//            newIndex = buildIndex(startPosition, words.length, ALPHABET.charAt(charIndex), 0, "");
-//            newIndex.split();
-//            newIndex.prepare();
-//            indexList.add(newIndex);
-//        }
     }
 
     public void getSelection(String prefix) {
+        if (prefix==null) {
+            throw new NullPointerException("Prefix is null!");
+        }
+        if (prefix.isEmpty()) {
+            return;
+        }
         String indexedPrefix;
         if (prefix.length()>INDICES_DEPTH) {
             indexedPrefix = prefix.substring(0, INDICES_DEPTH);
@@ -129,7 +131,11 @@ public class Dictionary {
             } else {
                 nestedIndices = null;
             }
-            this.sortedList = new Word[end-start];
+            if (depthLevel==0) {
+                this.sortedList = words;
+            } else {
+                this.sortedList = new Word[end - start];
+            }
         }
 
         private void split() {
@@ -145,9 +151,11 @@ public class Dictionary {
             }
         }
 
-        private void prepare() { //todo may be optimized in depthLevel==0
-            System.arraycopy(words, start, sortedList, 0, end-start);
-            Arrays.sort(sortedList, Word.getFrequencyComparator());
+        private void prepare() {
+            if (depthLevel!=0) {
+                System.arraycopy(words, start, sortedList, 0, end-start);
+                Arrays.sort(sortedList, Word.getFrequencyComparator());
+            }
             if (nestedIndices==null) {
                 return;
             }
