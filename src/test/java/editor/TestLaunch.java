@@ -10,7 +10,7 @@ import java.util.List;
 public class TestLaunch {
     private static final String DICTIONARY_FILE_NAME = "test.in";
     private static final String RESULT_FILE_NAME = "test.out";
-    private static final String JAR_NAME = "InnovativeTextEditor-1.0-SNAPSHOT.jar";
+    private static final String JAR_NAME = "InnovativeTextEditor-1.0.jar";
     public static void main(String[] args) {
         try {
             // reading input data from file
