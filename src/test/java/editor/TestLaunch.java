@@ -8,12 +8,14 @@ import java.util.List;
  * @author Vsevolod Kosulnikov
  */
 public class TestLaunch {
-    private static String dictionaryFileName = "test.in";
-    private static String resultFileName = "test.out";
-    private static String jarName = "InnovativeTextEditor-1.0-SNAPSHOT.jar";
+    private static final String DICTIONARY_FILE_NAME = "test.in";
+    private static final String RESULT_FILE_NAME = "test.out";
+    private static final String JAR_NAME = "InnovativeTextEditor-1.0-SNAPSHOT.jar";
     public static void main(String[] args) {
         try {
-            BufferedReader br = new BufferedReader(new FileReader(new File(System.getProperty("user.dir"), dictionaryFileName)));
+            // reading input data from file
+            File dictionaryFile = new File(System.getProperty("user.dir"), DICTIONARY_FILE_NAME);
+            BufferedReader br = new BufferedReader(new FileReader(dictionaryFile));
             List<String> testInput = new ArrayList<>();
             String currentLine;
             while ((currentLine = br.readLine())!=null) {
@@ -21,16 +23,19 @@ public class TestLaunch {
             }
             br.close();
 
+            // preparing and launching innovative editor
             List<String> cmd = new ArrayList<>();
             cmd.add("java");
             cmd.add("-jar");
-            cmd.add(new File(System.getProperty("user.dir"), jarName).getAbsolutePath());
+            cmd.add(new File(System.getProperty("user.dir"), JAR_NAME).getAbsolutePath());
             ProcessBuilder processBuilder = new ProcessBuilder(cmd);
             final Process process = processBuilder.start();
 
+            // initializing listener for StdErr
             final Thread errorStreamReading = new Thread(new Runnable(){
                 public void run(){
-                    try (BufferedReader input = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                    try (BufferedReader input = new BufferedReader(
+                            new InputStreamReader(process.getErrorStream()))) {
                         String line;
                         while ((line = input.readLine()) != null) {
                             System.err.println(line);
@@ -42,13 +47,15 @@ public class TestLaunch {
                 }
             });
             errorStreamReading.setName("Error-reading-thread");
-//            errorStreamReading.setDaemon(true);
             errorStreamReading.start();
 
-            final BufferedWriter bw = new BufferedWriter(new FileWriter(new File(System.getProperty("user.dir"), resultFileName)));
+            // initializing listener for StdOut and redirecting it to file
+            File resultFile = new File(System.getProperty("user.dir"), RESULT_FILE_NAME);
+            final BufferedWriter bw = new BufferedWriter(new FileWriter(resultFile));
             final Thread inputStreamThread = new Thread(new Runnable(){
                 public void run(){
-                    try (BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()))){
+                    try (BufferedReader input = new BufferedReader(
+                            new InputStreamReader(process.getInputStream()))){
                         String line;
                         while ((line = input.readLine())!=null) {
                             bw.write(line);
@@ -61,10 +68,11 @@ public class TestLaunch {
                 }
             });
             inputStreamThread.setName("Input-reading-thread");
-//            inputStreamThread.setDaemon(true);
             inputStreamThread.start();
 
-            try (BufferedWriter inputWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()))) {
+            // sending input data to StdIn
+            try (BufferedWriter inputWriter = new BufferedWriter(
+                    new OutputStreamWriter(process.getOutputStream()))) {
                 for (String input : testInput) {
                     inputWriter.write(input);
                     inputWriter.write("\r\n");
@@ -74,6 +82,5 @@ public class TestLaunch {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 }
