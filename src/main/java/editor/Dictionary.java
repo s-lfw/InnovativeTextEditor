@@ -6,7 +6,15 @@ import java.util.Arrays;
  * @author Vsevolod Kosulnikov
  */
 public class Dictionary {
+    /**
+     * Maximum allowed prompts for one prefix
+     */
     private static final int MAX_SELECTION_LENGTH = 10;
+
+    /**
+     * Performance parameter. The more this parameter, the more time indices building will require,
+     * but the less time will be spent on each query
+     */
     private static final int INDICES_DEPTH = 4;
     private static final String ALPHABET = "abcdefghijklmnopqrstuvwxyz";
     private static final char FIRST_CHAR = ALPHABET.charAt(0);
@@ -39,6 +47,9 @@ public class Dictionary {
         ++addingIndex;
     }
 
+    /**
+     * Building indices for dictionary
+     */
     public void prepareForWork() {
         Arrays.sort(words, Word.getWordComparator());
         baseIndex = new Index(0, words.length, "", 0);
@@ -83,8 +94,9 @@ public class Dictionary {
 
     private Index buildIndex(int from, int to, char character, int charIndex, String prefix) {
         prefix = prefix + character;
-        if (from>=to)
-            return new Index(from, from, prefix, charIndex+1);
+        if (from>=to) {
+            return new Index(from, from, prefix, charIndex + 1);
+        }
         int start = from;
         char currentChar;
         while (words[from].word.length()<=charIndex) {
