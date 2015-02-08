@@ -12,6 +12,8 @@ import java.util.concurrent.Executors;
  * @author Vsevolod Kosulnikov
  */
 public class ServerApplication {
+    public static final String END_OF_RESPONSE = "%end_of_response%";
+
     private ExecutorService executorService = Executors.newCachedThreadPool();
     private Dictionary dictionary;
     public ServerApplication(File dictionaryFile, int port) throws IOException {
@@ -88,6 +90,7 @@ public class ServerApplication {
                     for (String s : selection) {
                         out.println(s);
                     }
+                    out.println(END_OF_RESPONSE);
                 }
             } catch (IOException e) {
                 e.printStackTrace();

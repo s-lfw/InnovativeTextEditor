@@ -23,11 +23,18 @@ public class ClientApplication {
                 if (inLine.startsWith("get ")) {
                     out.println(inLine);
                     String response;
-                    while ((response = in.readLine())!=null) {
+                    while ((response = in.readLine()) != null) {
+                        if (response.equals(ServerApplication.END_OF_RESPONSE)) {
+                            break;
+                        }
                         System.out.println(response);
                     }
+                } else if (inLine.equalsIgnoreCase("exit")) {
+                    socket.close();
+                    return;
                 } else {
-                    System.out.println("Usage: \"get <prefix>\"");
+                    System.out.println("Usage: \"get <prefix>\" to create a request");
+                    System.out.println("Usage: \"exit\" to close connection and exit");
                 }
             }
         } catch (UnknownHostException e) {
