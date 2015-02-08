@@ -1,8 +1,6 @@
 package editor;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Vsevolod Kosulnikov
@@ -14,7 +12,7 @@ public class Dictionary {
     private static final char FIRST_CHAR = ALPHABET.charAt(0);
 
     private final Word[] words;
-    private List<Index> indexList = new ArrayList<>();
+    private Index baseIndex;
 
     public Dictionary(int initialLength) {
         if (initialLength<=0) {
@@ -39,100 +37,40 @@ public class Dictionary {
 
     public void prepareForWork() {
         Arrays.sort(words, Word.getWordComparator());
-        Index newIndex = null;
-        for (int charIndex = 0; charIndex<ALPHABET.length(); ++charIndex) {
-            int startPosition = newIndex==null ? 0 : newIndex.end;
-            newIndex = buildIndex(startPosition, words.length, ALPHABET.charAt(charIndex), 0, "");
-            indexList.add(newIndex);
-        }
-        // starting from 1 because one depth level was created above
-        for (int depthLevel = 1; depthLevel<INDICES_DEPTH; ++depthLevel) {
-            // it must be snapped because indexList will be changed
-            List<Index> newIndexList = new ArrayList<>();
-            for (int indexPosition = 0; indexPosition<indexList.size(); ++indexPosition) {
-                List<Index> bulkOfIndices = splitIndex(depthLevel, indexPosition);
-                newIndexList.addAll(bulkOfIndices);
-            }
-            indexList = newIndexList;
-        }
-    }
-
-    private List<Index> splitIndex(int depthLevel, int indexPosition) {
-        Index parsingIndex = indexList.get(indexPosition);
-        List<Index> newIndices = new ArrayList<>();
-        Index newIndex = null;
-        for (int charIndex = 0; charIndex<ALPHABET.length(); ++charIndex) {
-            int startPosition = newIndex==null ? parsingIndex.start : newIndex.end;
-            newIndex = buildIndex(startPosition, parsingIndex.end,
-                    ALPHABET.charAt(charIndex), depthLevel, parsingIndex.prefix);
-            newIndices.add(newIndex);
-        }
-        return newIndices;
+        baseIndex = new Index(0, words.length, "", 0);
+        baseIndex.split();
+        baseIndex.prepare();
+//        Index newIndex = null;
+//        for (int charIndex = 0; charIndex<ALPHABET.length(); ++charIndex) {
+//            int startPosition = newIndex==null ? 0 : newIndex.end;
+//            newIndex = buildIndex(startPosition, words.length, ALPHABET.charAt(charIndex), 0, "");
+//            newIndex.split();
+//            newIndex.prepare();
+//            indexList.add(newIndex);
+//        }
     }
 
     public void getSelection(String prefix) {
-//        if (prefix==null) {
-//            throw new NullPointerException("Prefix argument is null");
-//        }
-//        if (prefix.isEmpty()) {
-//            return;
-//        }
-
-        int startIndex, endIndex;
-        int startIndexPosition = 0;
-        for (int charIndex = 0; charIndex < Math.min(prefix.length(), INDICES_DEPTH); ++charIndex) {
-            startIndexPosition += ALPHABET.indexOf(prefix.charAt(charIndex))*Math.pow(ALPHABET.length(),
-                    INDICES_DEPTH-charIndex-1);
-        }
-        Index index = indexList.get(startIndexPosition);
-        startIndex = index.start;
-
-        if (startIndex>=words.length) {
-            return;
-        }
-
-        while (prefix.compareTo(words[startIndex].word)>0) {
-            ++startIndex;
-        }
-        if (prefix.compareTo(words[startIndex].word)<0) {
-            return;
-        }
-
-        int endIndexPosition = 0;
-        if (prefix.length()>=INDICES_DEPTH) {
-            endIndex = index.end;
+        String indexedPrefix;
+        if (prefix.length()>INDICES_DEPTH) {
+            indexedPrefix = prefix.substring(0, INDICES_DEPTH);
         } else {
-            for (int charIndex = 0; charIndex < prefix.length()-1; ++charIndex) {
-                endIndexPosition += ALPHABET.indexOf(prefix.charAt(charIndex))*Math.pow(ALPHABET.length(),
-                        INDICES_DEPTH-charIndex-1);
-            }
-            endIndexPosition += (ALPHABET.indexOf(prefix.charAt(prefix.length()-1)) + 1)*Math.pow(ALPHABET.length(),
-                    INDICES_DEPTH-prefix.length());
-            if (endIndexPosition==indexList.size()) {
-                --endIndexPosition;
-            }
-            index = indexList.get(endIndexPosition);
-            endIndex = index.start;
+            indexedPrefix = prefix;
         }
 
-        while (!words[endIndex-1].word.startsWith(prefix)) {
-            --endIndex;
+        Index nearestIndex = baseIndex;
+        for (int charPosition = 0; charPosition<indexedPrefix.length(); ++charPosition) {
+            nearestIndex = nearestIndex.getNestedIndex(indexedPrefix.charAt(charPosition));
         }
 
-        int selectionLength = endIndex-startIndex;
-        if (selectionLength==0) {
-            return;
-        }
-        if (selectionLength<=MAX_SELECTION_LENGTH) {
-            for (int i = startIndex; i<endIndex; ++i) {
-                sendAnswer(words[i].word);
+        int foundWords = 0;
+        for (Word indexedWord : nearestIndex.sortedList) {
+            if (indexedWord.word.startsWith(prefix)) {
+                sendAnswer(indexedWord.word);
+                ++foundWords;
             }
-        } else {
-            List<Word> result = new ArrayList<>();
-            for (int i = 0; i<MAX_SELECTION_LENGTH; ++i) {
-                Word w = getMostFrequent(startIndex, endIndex, result);
-                result.add(w);
-                sendAnswer(w.word);
+            if (foundWords==MAX_SELECTION_LENGTH) {
+                break;
             }
         }
     }
@@ -141,24 +79,10 @@ public class Dictionary {
         System.out.println(s);
     }
 
-    private Word zeroWord = new Word("", 0);
-    private Word getMostFrequent(int startIndex, int endIndex, List<Word> excludeWords) {
-        Word result = zeroWord;
-        for (int i = startIndex; i<endIndex; ++i) {
-            Word w = words[i];
-            if (w.frequency>result.frequency) {
-                if (!excludeWords.contains(w)) {
-                    result = w;
-                }
-            }
-        }
-        return result;
-    }
-
     private Index buildIndex(int from, int to, char character, int charIndex, String prefix) {
         prefix = prefix + character;
         if (from>=to)
-            return new Index(from, from, prefix);
+            return new Index(from, from, prefix, charIndex+1);
         int start = from;
         char currentChar;
         while (words[from].word.length()<=charIndex) {
@@ -171,7 +95,7 @@ public class Dictionary {
                     start = from;
                     break;
                 } else if (currentChar>character) {
-                    return new Index(0, 0, prefix);
+                    return new Index(0, 0, prefix, charIndex+1);
                 }
                 ++from;
             }
@@ -184,18 +108,56 @@ public class Dictionary {
             ++from;
         }
 
-        return new Index(start, from, prefix);
+        return new Index(start, from, prefix, charIndex+1);
     }
 
     private class Index {
         public final int start;
         public final int end;
         public final String prefix;
+        public final int depthLevel;
+        private final Index[] nestedIndices;
+        private final Word[] sortedList;
 
-        private Index(int start, int end, String prefix) {
+        private Index(int start, int end, String prefix, int depthLevel) {
             this.start = start;
             this.end = end;
             this.prefix = prefix;
+            this.depthLevel = depthLevel;
+            if (depthLevel<INDICES_DEPTH) {
+                nestedIndices = new Index[ALPHABET.length()];
+            } else {
+                nestedIndices = null;
+            }
+            this.sortedList = new Word[end-start];
+        }
+
+        private void split() {
+            if (nestedIndices==null) {
+                return;
+            }
+            Index newIndex = null;
+            for (int charIndex = 0; charIndex<ALPHABET.length(); ++charIndex) {
+                int startPosition = newIndex==null ? start : newIndex.end;
+                newIndex = buildIndex(startPosition, end, ALPHABET.charAt(charIndex), depthLevel, prefix);
+                newIndex.split();
+                nestedIndices[charIndex] = newIndex;
+            }
+        }
+
+        private void prepare() { //todo may be optimized in depthLevel==0
+            System.arraycopy(words, start, sortedList, 0, end-start);
+            Arrays.sort(sortedList, Word.getFrequencyComparator());
+            if (nestedIndices==null) {
+                return;
+            }
+            for (Index nestedIndex : nestedIndices) {
+                nestedIndex.prepare();
+            }
+        }
+
+        private Index getNestedIndex(char character) {
+            return nestedIndices[ALPHABET.indexOf(character)];
         }
     }
 }
