@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class Application {
     private final boolean debugMode;
-    private String dictionaryFileName = "test.in";
+//    private String dictionaryFileName = "test.in";
     private File dictionaryFile;
     private Dictionary dictionary;
     private List<String> queries = new ArrayList<>();
@@ -22,9 +22,9 @@ public class Application {
     }
 
     public void run() throws IOException {
-        dictionaryFile = new File(System.getProperty("user.dir"), dictionaryFileName);
-        System.out.println("Reading dictionary data and test selection from \""+
-                dictionaryFile.getAbsolutePath()+"\"");
+//        dictionaryFile = new File(System.getProperty("user.dir"), dictionaryFileName);
+//        System.out.println("Reading dictionary data and test selection from \""+
+//                dictionaryFile.getAbsolutePath()+"\"");
         initDictionary();
         System.out.println("Dictionary initialization is finished. Now working.");
         doWork();
@@ -32,7 +32,9 @@ public class Application {
 
     private void initDictionary() throws IOException {
         long timeMillis = -System.currentTimeMillis();
-        BufferedReader br = new BufferedReader(new FileReader(dictionaryFile));
+//        BufferedReader br = new BufferedReader(new FileReader(dictionaryFile));
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        System.out.println("Input reader initialized");
         String currentLine = br.readLine();
         int dictionaryLength = 0;
         try {
@@ -42,6 +44,7 @@ public class Application {
             throw new IOException("File "+dictionaryFile+" does not contain proper data"); //todo
         }
         dictionary = new Dictionary(dictionaryLength);
+        System.out.println("Dictionary initialized");
         for (int line = 0; line<dictionaryLength; ++line) {
             currentLine = br.readLine();
             String[] wordAndFrequency = currentLine.split(" ");
@@ -67,6 +70,9 @@ public class Application {
         while ((currentLine=br.readLine())!=null) {
             queries.add(currentLine);
         }
+
+        br.close();
+        //todo br.close()
     }
 
     private void doWork() {
