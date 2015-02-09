@@ -42,7 +42,12 @@ class Word {
         return new Comparator<Word>() {
             @Override
             public int compare(Word o1, Word o2) {
-                return o2.frequency-o1.frequency;
+                int frequencyComparison = o2.frequency-o1.frequency;
+                if (frequencyComparison==0) {
+                    return o1.word.compareTo(o2.word);
+                } else {
+                    return frequencyComparison;
+                }
             }
         };
     }
