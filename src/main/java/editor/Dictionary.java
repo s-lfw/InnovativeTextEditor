@@ -21,6 +21,7 @@ public class Dictionary {
     private static final int INDICES_DEPTH = 4;
     private static final String ALPHABET = "abcdefghijklmnopqrstuvwxyz";
     private static final char FIRST_CHAR = ALPHABET.charAt(0);
+    private int indicesDepth = 0;
 
     private final Word[] words;
     private Index baseIndex;
@@ -83,6 +84,7 @@ public class Dictionary {
             return;
         }
         words[addingIndex] = new Word(word.toLowerCase(), frequency);
+        indicesDepth = Math.max(indicesDepth, word.length());
         ++addingIndex;
     }
 
@@ -90,6 +92,7 @@ public class Dictionary {
      * Building indices for dictionary
      */
     public void prepareForWork() {
+        indicesDepth = Math.min(indicesDepth, INDICES_DEPTH);
         Arrays.sort(words, Word.getWordComparator());
         baseIndex = new Index(0, words.length, "", 0);
         baseIndex.split();
@@ -104,8 +107,8 @@ public class Dictionary {
             return new ArrayList<>();
         }
         String indexedPrefix;
-        if (prefix.length()>INDICES_DEPTH) {
-            indexedPrefix = prefix.substring(0, INDICES_DEPTH);
+        if (prefix.length()>indicesDepth) {
+            indexedPrefix = prefix.substring(0, indicesDepth);
         } else {
             indexedPrefix = prefix;
         }
@@ -173,7 +176,7 @@ public class Dictionary {
             this.end = end;
             this.prefix = prefix;
             this.depthLevel = depthLevel;
-            if (depthLevel<INDICES_DEPTH) {
+            if (depthLevel<indicesDepth) {
                 nestedIndices = new Index[ALPHABET.length()];
             } else {
                 nestedIndices = null;
