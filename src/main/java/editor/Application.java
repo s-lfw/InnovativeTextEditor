@@ -1,5 +1,8 @@
 package editor;
 
+import editor.netservice.ClientApplication;
+import editor.netservice.ServerApplication;
+
 import java.io.*;
 import java.util.List;
 
@@ -34,7 +37,7 @@ public class Application {
     public static void main(String[] args) {
         LaunchMode launchMode = LaunchMode.DESKTOP;
         String host = null;
-        String dictionaryFilePath = null;
+        String dictionaryFilePath = "";
         int port = -1;
         if (args.length>0) {
             switch (args[0]) {
@@ -57,10 +60,13 @@ public class Application {
                     app.run();
                     break;
                 case SERVER:
-                    new ServerApplication(new File(dictionaryFilePath), port);
+                    ServerApplication serverApp =
+                            new ServerApplication(new File(dictionaryFilePath), port);
+                    serverApp.run();
                     break;
                 case CLIENT:
-                    new ClientApplication(host, port);
+                    ClientApplication clientApp = new ClientApplication(host, port);
+                    clientApp.run();
             }
         } catch (Throwable e) {
             System.err.println("Oops! Exception occurred, program will be terminated.");
