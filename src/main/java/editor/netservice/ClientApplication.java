@@ -1,40 +1,46 @@
 package editor.netservice;
 
+import editor.Application;
+
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Vsevolod Kosulnikov
  */
-public class ClientApplication {
-    private final String host;
-    private final int port;
-    public ClientApplication(String host, int port) {
-        this.host = host;
-        this.port = port;
+public class ClientApplication extends Application {
+    private final Socket socket;
+    private final PromptProtocol protocol;
+    public ClientApplication(String host, int port) throws IOException {
+        socket = new Socket(host, port);
+        this.protocol = new PromptProtocol(socket.getInputStream(), socket.getOutputStream());
     }
+
+    @Override
     public void run() throws IOException {
-        try (Socket socket = new Socket(host, port)) {
-            Scanner scanner = new Scanner(System.in);
-            PromptProtocol protocol = new PromptProtocol(socket.getInputStream(),
-                    socket.getOutputStream());
-            String inLine;
-            while ((inLine = scanner.nextLine())!=null) {
-                if (inLine.equalsIgnoreCase("exit")) {
-                    socket.close();
-                    return;
-                } else {
-                    try {
-                        String response = protocol.request(inLine);
-                        System.out.println(response);
-                    } catch (BadRequestException e) {
-                        PromptProtocol.printUsage(System.out);
-                    } catch (IOException e) {
-                        System.out.println("IOException occurred during request");
-                    }
-                }
-            }
+        try {
+            super.run();
+        } finally {
+            socket.close();
         }
     }
+
+    @Override
+    public void initDictionary(BufferedReader br) throws IOException {
+        // in net implementation dictionary on client side is not required
+    }
+
+    @Override
+    protected List<String> getSelection(String prefix) {
+        try {
+            return protocol.request(prefix);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
 }

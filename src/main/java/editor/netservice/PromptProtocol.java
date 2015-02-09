@@ -4,6 +4,7 @@ import editor.Dictionary;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,18 +38,33 @@ public class PromptProtocol {
     public void processRequest(String request) {
         if (!request.startsWith("get ")) {
             out.println(BAD_REQUEST);
+            return;
         }
-        List<String> selection = dictionary.getSelection(request.substring(4));
+        request = request.substring(4);
+        if (!isAlphabetic(request)) {
+            out.println(BAD_REQUEST);
+            return;
+        }
+        List<String> selection = dictionary.getSelection(request);
         out.println(selection.size());
         for (String s : selection) {
             out.println(s);
         }
     }
+    private boolean isAlphabetic(String name) {
+        char[] chars = name.toCharArray();
+        for (char c : chars) {
+            if(!Character.isLetter(c)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
-    public String request(String request) throws IOException {
-        out.println(request);
+    public List<String> request(String request) throws IOException {
+        out.println("get " + request);
         String response;
-        StringBuilder responseBuilder = new StringBuilder();
+        List<String> responseList = new ArrayList<>();
         int length = 0;
         int stringCount = 0;
         while (stringCount<=length && (response = in.readLine()) != null) {
@@ -57,11 +73,11 @@ public class PromptProtocol {
             } else if (length==0) {
                 length = Integer.parseInt(response);
             } else {
-                responseBuilder.append(response).append("\r\n");
+                responseList.add(response);
             }
             ++stringCount;
         }
-        return responseBuilder.toString();
+        return responseList;
     }
 
     public void closeConnection() {
@@ -75,10 +91,5 @@ public class PromptProtocol {
         } catch (IOException e) {
             e.printStackTrace(); //todo
         }
-    }
-
-    public static void printUsage(PrintStream out) {
-        out.println("Usage: \"get <prefix>\" to create a request");
-        out.println("Usage: \"exit\" to close connection and exit");
     }
 }

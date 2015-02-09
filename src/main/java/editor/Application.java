@@ -10,28 +10,39 @@ import java.util.List;
  * @author Vsevolod Kosulnikov
  */
 public class Application {
-    private Application() {}
+    private Dictionary dictionary;
 
     public void run() throws IOException {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
-            Dictionary dictionary = Dictionary.initDictionary(br);
+            initDictionary(br);
+            doWork(br);
+        }
+    }
 
-            // doing the work!
-            int queriesCount;
-            String currentLine = br.readLine();
-            try {
-                queriesCount = Integer.parseInt(currentLine);
-            } catch (NumberFormatException e) {
-                throw new IOException("Cannot resolve queries count M, trying to parse \'"
-                        +currentLine+"\'");
-            }
-            for (int query = 0; query<queriesCount; ++query) {
-                List<String> selection = dictionary.getSelection(br.readLine());
-                for (String s : selection) {
-                    System.out.println(s);
-                }
+    public void initDictionary(BufferedReader br) throws IOException {
+        dictionary = Dictionary.initDictionary(br);
+    }
+
+    public void doWork(BufferedReader br) throws IOException {
+        // doing the work!
+        int queriesCount;
+        String currentLine = br.readLine();
+        try {
+            queriesCount = Integer.parseInt(currentLine);
+        } catch (NumberFormatException e) {
+            throw new IOException("Cannot resolve queries count M, trying to parse \'"
+                    +currentLine+"\'");
+        }
+        for (int query = 0; query<queriesCount; ++query) {
+            List<String> selection = getSelection(br.readLine());
+            for (String s : selection) {
+                System.out.println(s);
             }
         }
+    }
+
+    protected List<String> getSelection(String prefix) {
+        return dictionary.getSelection(prefix);
     }
 
     public static void main(String[] args) {
@@ -77,7 +88,7 @@ public class Application {
         System.exit(0);
     }
 
-    private static enum LaunchMode {
+    protected static enum LaunchMode {
         DESKTOP, SERVER, CLIENT
     }
 }
