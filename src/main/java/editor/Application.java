@@ -46,38 +46,29 @@ public class Application {
     }
 
     public static void main(String[] args) {
-        LaunchMode launchMode = LaunchMode.DESKTOP;
-        String host = null;
-        String dictionaryFilePath = "";
-        int port = -1;
-        if (args.length>0) {
-            switch (args[0]) {
-                case "-server":
-                    launchMode = LaunchMode.SERVER;
-                    dictionaryFilePath = args[1];
-                    port = Integer.parseInt(args[2]);
-                    break;
-                case "-client":
-                    launchMode = LaunchMode.CLIENT;
-                    host = args[1];
-                    port = Integer.parseInt(args[2]);
-                    break;
-            }
-        }
+        String host;
+        String dictionaryFilePath;
+        int port;
         try {
-            switch (launchMode) {
-                case DESKTOP:
-                    Application app = new Application();
-                    app.run();
-                    break;
-                case SERVER:
-                    ServerApplication serverApp =
-                            new ServerApplication(new File(dictionaryFilePath), port);
-                    serverApp.run();
-                    break;
-                case CLIENT:
-                    ClientApplication clientApp = new ClientApplication(host, port);
-                    clientApp.run();
+            if (args.length>0) {
+                switch (args[0]) {
+                    case "-server":
+                        dictionaryFilePath = args[1];
+                        port = Integer.parseInt(args[2]);
+                        ServerApplication serverApp =
+                                new ServerApplication(new File(dictionaryFilePath), port);
+                        serverApp.run();
+                        break;
+                    case "-client":
+                        host = args[1];
+                        port = Integer.parseInt(args[2]);
+                        ClientApplication clientApp = new ClientApplication(host, port);
+                        clientApp.run();
+                        break;
+                }
+            } else {
+                Application app = new Application();
+                app.run();
             }
         } catch (Throwable e) {
             System.err.println("Oops! Exception occurred, program will be terminated.");
@@ -86,9 +77,5 @@ public class Application {
         }
 
         System.exit(0);
-    }
-
-    protected static enum LaunchMode {
-        DESKTOP, SERVER, CLIENT
     }
 }

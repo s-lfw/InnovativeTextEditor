@@ -89,7 +89,7 @@ public class PromptProtocol {
                 in.close();
             }
         } catch (IOException e) {
-            e.printStackTrace(); //todo
+            e.printStackTrace();
         }
     }
 }

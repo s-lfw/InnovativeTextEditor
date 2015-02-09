@@ -1,0 +1,9 @@
+Usage of the application:
+    <without arguments> - basic task. Reads data in specified format from System.in and
+        prints results to System.out. With 'test.in' on Intel Core i5 @3550 works about 1.5 secs
+    -server <path_to_dictionary_file> <port> - additional task, server side. Starts the server
+        with dictionary from file on specified port
+    -client <host> <port> - additional task, client side. Connects to the server by host and port.
+        Works as same as in basic task: reads data in specified format (without dictionary data)
+        from System.in and prints result to System.out. Unlike the basic task, access to dictionary
+        performed over network
