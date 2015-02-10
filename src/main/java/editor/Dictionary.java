@@ -103,8 +103,9 @@ public class Dictionary {
         if (prefix==null) {
             throw new NullPointerException("Prefix is null!");
         }
+        List<String> result = new ArrayList<>();
         if (prefix.isEmpty()) {
-            return new ArrayList<>();
+            result.add("");
         }
         String indexedPrefix;
         if (prefix.length()>indicesDepth) {
@@ -118,7 +119,6 @@ public class Dictionary {
             nearestIndex = nearestIndex.getNestedIndex(indexedPrefix.charAt(charPosition));
         }
 
-        List<String> result = new ArrayList<>();
         for (Word indexedWord : nearestIndex.sortedList) {
             if (indexedWord.word.startsWith(prefix)) {
                 result.add(indexedWord.word);
@@ -126,6 +126,9 @@ public class Dictionary {
             if (result.size()==MAX_SELECTION_LENGTH) {
                 break;
             }
+        }
+        if (result.size()==0) {
+            result.add("");
         }
         return result;
     }
