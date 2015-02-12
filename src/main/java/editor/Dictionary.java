@@ -20,7 +20,6 @@ public class Dictionary {
      */
     private static final int INDICES_DEPTH = 4;
     private static final String ALPHABET = "abcdefghijklmnopqrstuvwxyz";
-    private static final char FIRST_CHAR = ALPHABET.charAt(0);
     private int indicesDepth = 0;
 
     private final Word[] words;
@@ -84,6 +83,8 @@ public class Dictionary {
             return;
         }
         words[addingIndex] = new Word(word.toLowerCase(), frequency);
+        // here is determined maximum length of dictionary words.
+        // For details see prepareForWork() method
         indicesDepth = Math.max(indicesDepth, word.length());
         ++addingIndex;
     }
@@ -92,9 +93,12 @@ public class Dictionary {
      * Building indices for dictionary
      */
     public void prepareForWork() {
+        // If this value is less than INDICES_DEPTH, then real indices depth must be
+        // truncated, because there are explicitly no words longer,
+        // so such depth will be excess
         indicesDepth = Math.min(indicesDepth, INDICES_DEPTH);
         Arrays.sort(words, Word.getWordComparator());
-        baseIndex = new Index(0, words.length, "", 0);
+        baseIndex = new Index(0, words.length, words, "", 0);
         baseIndex.split();
         baseIndex.prepare();
     }
@@ -106,19 +110,25 @@ public class Dictionary {
         List<String> result = new ArrayList<>();
         if (prefix.isEmpty()) {
             result.add("");
+            return result;
         }
         String indexedPrefix;
+        // even if prefix longer than indicesDepth there are no way to search by whole prefix;
+        // it is necessary to truncate the prefix to find appropriate index
         if (prefix.length()>indicesDepth) {
             indexedPrefix = prefix.substring(0, indicesDepth);
         } else {
             indexedPrefix = prefix;
         }
 
+        // Searching the index...
         Index nearestIndex = baseIndex;
         for (int charPosition = 0; charPosition<indexedPrefix.length(); ++charPosition) {
             nearestIndex = nearestIndex.getNestedIndex(indexedPrefix.charAt(charPosition));
         }
 
+        // ...And finding appropriate words from sortedList
+        // (list is sorted by frequency, see class Index)
         for (Word indexedWord : nearestIndex.sortedList) {
             if (indexedWord.word.startsWith(prefix)) {
                 result.add(indexedWord.word);
@@ -133,50 +143,25 @@ public class Dictionary {
         return result;
     }
 
-    private Index buildIndex(int from, int to, char character, int charIndex, String prefix) {
-        prefix = prefix + character;
-        if (from>=to) {
-            return new Index(from, from, prefix, charIndex + 1);
-        }
-        int start = from;
-        char currentChar;
-        while (words[from].word.length()<=charIndex) {
-            ++from;
-        }
-        if (character!=FIRST_CHAR) {
-            while (from<to) {
-                currentChar = words[from].word.charAt(charIndex);
-                if (currentChar==character) {
-                    start = from;
-                    break;
-                } else if (currentChar>character) {
-                    return new Index(0, 0, prefix, charIndex+1);
-                }
-                ++from;
-            }
-        }
-        while (from<to) {
-            currentChar = words[from].word.charAt(charIndex);
-            if (currentChar!=character) {
-                break;
-            }
-            ++from;
-        }
-
-        return new Index(start, from, prefix, charIndex+1);
-    }
-
     private class Index {
-        public final int start;
-        public final int end;
+        /**
+         * Prefix of this index. All words in this index are started with it
+         */
         public final String prefix;
+        /**
+         * Depth of this index in index hierarchy
+         */
         public final int depthLevel;
+        /**
+         * Array indices with next depth level
+         */
         private final Index[] nestedIndices;
+        /**
+         * Words for this index sorted by frequency (sorting is performed in prepare() method)
+         */
         private final Word[] sortedList;
 
-        private Index(int start, int end, String prefix, int depthLevel) {
-            this.start = start;
-            this.end = end;
+        private Index(int start, int end, Word[] sourceArray, String prefix, int depthLevel) {
             this.prefix = prefix;
             this.depthLevel = depthLevel;
             if (depthLevel<indicesDepth) {
@@ -184,31 +169,48 @@ public class Dictionary {
             } else {
                 nestedIndices = null;
             }
-            if (depthLevel==0) {
-                this.sortedList = words;
-            } else {
-                this.sortedList = new Word[end - start];
-            }
+            this.sortedList = new Word[end - start];
+            System.arraycopy(sourceArray, start, sortedList, 0, end-start);
         }
 
         private void split() {
             if (nestedIndices==null) {
                 return;
             }
-            Index newIndex = null;
+            int position = 0;
+            // Splitting the index...
             for (int charIndex = 0; charIndex<ALPHABET.length(); ++charIndex) {
-                int startPosition = newIndex==null ? start : newIndex.end;
-                newIndex = buildIndex(startPosition, end, ALPHABET.charAt(charIndex), depthLevel, prefix);
+                String newPrefix = prefix+ALPHABET.charAt(charIndex);
+                Index newIndex;
+                // If there are no more words, then next index will be empty
+                if (position>=sortedList.length) {
+                    newIndex = new Index(position, position, sortedList, newPrefix, depthLevel+1);
+                // ...else here some work must be performed
+                } else {
+                    // Length of first word in depthLevel index must be shorter than depthLevel+1
+                    // Exactly one word may be shorter, so one increment is enough
+                    if (sortedList[position].word.length()<=depthLevel) {
+                        ++position;
+                    }
+                    int startPosition = position;
+                    // Increasing end position of new index (relative to this index words)
+                    while (position<sortedList.length &&
+                            sortedList[position].word.startsWith(newPrefix)) {
+                        ++position;
+                    }
+                    newIndex = new Index(startPosition, position, sortedList,
+                            newPrefix, depthLevel+1);
+                }
+                // New index must be split too
                 newIndex.split();
                 nestedIndices[charIndex] = newIndex;
             }
         }
 
+
         private void prepare() {
-            if (depthLevel!=0) {
-                System.arraycopy(words, start, sortedList, 0, end-start);
-                Arrays.sort(sortedList, Word.getFrequencyComparator());
-            }
+            // Sorting this index and all inner indices lists
+            Arrays.sort(sortedList, Word.getFrequencyComparator());
             if (nestedIndices==null) {
                 return;
             }

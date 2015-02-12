@@ -8,9 +8,9 @@ import java.util.List;
  * @author Vsevolod Kosulnikov
  */
 public class TestLaunch {
-    private static final String DICTIONARY_FILE_NAME = "remote_test.in";
+    private static final String DICTIONARY_FILE_NAME = "test.in";
     private static final String RESULT_FILE_NAME = "test.out";
-    private static final String JAR_NAME = "InnovativeTextEditor-1.2-SNAPSHOT.jar";
+    private static final String JAR_NAME = "InnovativeTextEditor-1.2.3-SNAPSHOT.jar";
     public static void main(String[] args) {
         try {
             // reading input data from file
@@ -30,9 +30,9 @@ public class TestLaunch {
             cmd.add(new File(System.getProperty("user.dir"), JAR_NAME).getAbsolutePath());
 
             // for client testing:
-            cmd.add("-client");
-            cmd.add("localhost");
-            cmd.add("7322");
+//            cmd.add("-client");
+//            cmd.add("localhost");
+//            cmd.add("7322");
 
             ProcessBuilder processBuilder = new ProcessBuilder(cmd);
             final Process process = processBuilder.start();
